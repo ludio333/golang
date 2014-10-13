@@ -10,15 +10,15 @@ import (
 	"runtime"
 	"strconv"
 	"time"
-        "math/rand"
+	//        "math/rand"
 )
 
 var worker = runtime.NumCPU()
 var regex_time = regexp.MustCompile(`(\S{3}\s*\d{1,2}\s*\d{2}:\d{2}:\d{2}\s*)(.*?)$`)
 var regex = regexp.MustCompile(`(\w+)\[(\d+)\]:\s*HISTORY:\s*IP=(\S*)\s*PID=(\d+)\s*PPID=(\d+)\s*UID=(\d+)\s*UNAME=(\S+)\s*CMD=([\s\S]+)`)
 var regex_1 = regexp.MustCompile(`(\w+)\[(\d+)\]:\s*(HISTORY: INTERACTIVE SHELL START BY USERNAME:.*?)$`)
-var seek = [...]string{"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M",
-"N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9"}
+
+//var seek = [...]string{"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9"}
 var host string = "10.2.20.155:9200"
 
 type Job struct {
@@ -42,7 +42,7 @@ type BashLog struct {
 
 const (
 	Time = "2006-01-02T15:04:05.999999999Z07:00"
-	Day = "2006-01-02"
+	Day  = "2006-01-02"
 	Date = "Jan 2 15:04:05 2006"
 )
 
@@ -68,12 +68,18 @@ func (job Job) Do(docs chan BashLog) {
 	year := strconv.Itoa(l.Year())
 	//now := l.Format(Time)
 	match_all := regex_time.FindStringSubmatch(text)
+	if len(match_all) == 0 {
+		return
+	}
 	time_tmp := match_all[1]
 	time_text := time_tmp + year
-	t,_ := time.Parse(Date,time_text)
+	t, _ := time.Parse(Date, time_text)
 	now := t.Format(Time)
 	date := t.Format(Day)
 	match := regex.FindStringSubmatch(match_all[2])
+	if len(match) == 0 {
+		return
+	}
 	if len(match) > 5 {
 		bpid, _ := strconv.Atoi(match[2])
 		pid, _ := strconv.Atoi(match[4])
@@ -107,8 +113,9 @@ func insert(docs chan BashLog) {
 	}
 	indexer.Start()
 	for doc := range docs {
-		key := random_key()
-		err := indexer.Index("syslog", "syslog-"+doc.Date, key, "", nil, &doc, true)
+		//key := random_key()
+		//fmt.Println(key)
+		err := indexer.Index("syslog-"+doc.Date, "syslog", "", "", nil, &doc, true)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -156,13 +163,12 @@ func addjobs(jobs chan<- Job) {
 	}
 }
 
-func random_key() (key string) {
-        var id string
-        for i:=1;i<=16;i++{
-                r := rand.New(rand.NewSource(time.Now().UnixNano()))
-                t := r.Intn(len(seek))
-                id = id + seek[t]
-        }
-        return id
-}
-
+//func random_key() (key string) {
+//        var id string
+//        for i:=1;i<=16;i++{
+//                r := rand.New(rand.NewSource(time.Now().UnixNano()))
+//                t := r.Intn(len(seek))
+//                id = id + seek[t]
+//        }
+//        return id
+//}
