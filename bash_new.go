@@ -16,7 +16,7 @@ import (
 var worker = runtime.NumCPU()
 var regex_time = regexp.MustCompile(`(\S{3}\s*\d{1,2}\s*\d{2}:\d{2}:\d{2}\s*)(.*?)$`)
 var regex = regexp.MustCompile(`(\w+)\[(\d+)\]:\s*HISTORY:\s*IP=(\S*)\s*PID=(\d+)\s*PPID=(\d+)\s*UID=(\d+)\s*UNAME=(\S+)\s*CMD=([\s\S]+)`)
-var regex_1 = regexp.MustCompile(`(\w+)\[(\d+)\]:\s*(HISTORY: INTERACTIVE SHELL START BY USERNAME:.*?)$`)
+var regex_1 = regexp.MustCompile(`(\w+)\[(\d+)\]:\s*(HISTORY:\s*INTERACTIVE\s*SHELL\s*START\s*BY\s*USERNAME:.*?)$`)
 
 //var seek = [...]string{"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9"}
 var host string = "10.2.20.155:9200"
@@ -77,9 +77,9 @@ func (job Job) Do(docs chan BashLog) {
 	now := t.Format(Time)
 	date := t.Format(Day)
 	match := regex.FindStringSubmatch(match_all[2])
-	if len(match) == 0 {
-		return
-	}
+	//	if len(match) == 0 {
+	//		return
+	//	}
 	if len(match) > 5 {
 		bpid, _ := strconv.Atoi(match[2])
 		pid, _ := strconv.Atoi(match[4])
@@ -93,6 +93,8 @@ func (job Job) Do(docs chan BashLog) {
 			bpid, _ := strconv.Atoi(match_1[2])
 			bashlog := BashLog{match_1[1], bpid, "null", -1, -1, -1, "null", match_1[3], ip, now, date}
 			docs <- bashlog
+		} else {
+			return
 		}
 	}
 
